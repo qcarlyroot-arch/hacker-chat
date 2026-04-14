@@ -1,84 +1,61 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>TERMINAL ACCESS: GRANTED</title>
+    <title>Hacker Chat</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
     <style>
-        body {
-            background-color: #000;
-            color: #0f0;
-            font-family: 'Courier New', Courier, monospace;
-            display: flex;
-            flex-direction: column;
-            height: 100vh;
-            margin: 0;
-            overflow: hidden;
-        }
-        #chat-window {
-            flex: 1;
-            padding: 20px;
-            overflow-y: auto;
-            border-bottom: 2px solid #0f0;
-        }
-        #input-area {
-            padding: 10px;
-            display: flex;
-            background: #111;
-        }
-        input, button {
-            background: #000;
-            border: 1px solid #0f0;
-            color: #0f0;
-            padding: 10px;
-        }
-        input { flex: 1; margin-right: 10px; }
-        .img-msg { max-width: 200px; border: 1px solid #0f0; margin-top: 5px; }
+        body { background: black; color: #00ff00; font-family: monospace; }
+        #login-screen { text-align: center; margin-top: 100px; }
+        #chat-screen { display: none; padding: 20px; }
+        input { background: black; color: #00ff00; border: 1px solid #00ff00; padding: 10px; width: 250px; outline: none; }
+        button { background: #00ff00; color: black; border: none; padding: 10px 20px; cursor: pointer; font-weight: bold; }
+        #messages { border: 1px solid #00ff00; height: 400px; overflow-y: scroll; padding: 10px; margin-bottom: 10px; background: rgba(0, 20, 0, 0.5); }
+        .msg-line { margin-bottom: 5px; border-bottom: 1px dotted #004400; padding-bottom: 2px; }
     </style>
 </head>
 <body>
-    <div id="chat-window">
-        <div>[SYSTEM] Bağlantı başarılı... Cihaz aktif.</div>
-    </div>
-    <div id="input-area">
-        <input id="msg" placeholder="Komut girin veya mesaj yazın..." autocomplete="off">
-        <input type="file" id="imageInput" accept="image/*" style="display:none">
-        <button onclick="document.getElementById('imageInput').click()">FOTO EKLE</button>
-        <button onclick="sendMsg()">GÖNDER</button>
+
+    <div id="login-screen">
+        <h1>[ SİSTEME ERİŞİM İÇİN KOD ADI GİRİN ]</h1>
+        <input type="text" id="username" placeholder="Kod Adınız..." onkeypress="if(event.key==='Enter') startChat()">
+        <button onclick="startChat()">BAĞLAN</button>
     </div>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
+    <div id="chat-screen">
+        <div id="messages"></div>
+        <input type="text" id="msg" placeholder="Mesajınızı buraya yazın..." style="width: 70%;" onkeypress="if(event.key==='Enter') sendMessage()">
+        <button onclick="sendMessage()">GÖNDER</button>
+    </div>
+
     <script>
         var socket = io();
+        var myName = "";
 
-        function sendMsg() {
-            var input = document.getElementById('msg');
-            if(input.value) {
-                socket.emit('message', "> USER: " + input.value);
-                input.value = '';
+        function startChat() {
+            var input = document.getElementById("username");
+            if(input.value.trim() != "") {
+                myName = input.value;
+                document.getElementById("login-screen").style.display = "none";
+                document.getElementById("chat-screen").style.display = "block";
             }
         }
 
-        document.getElementById('imageInput').onchange = function(e) {
-            var file = e.target.files[0];
-            var reader = new FileReader();
-            reader.onload = function(event) {
-                socket.emit('image', event.target.result);
-            };
-            reader.readAsDataURL(file);
-        };
+        function sendMessage() {
+            var msgInput = document.getElementById("msg");
+            if(msgInput.value.trim() != "") {
+                socket.emit('message', { name: myName, msg: msgInput.value });
+                msgInput.value = "";
+            }
+        }
 
-        socket.on('message', function(msg) {
-            var item = document.createElement('div');
-            item.textContent = msg;
-            document.getElementById('chat-window').appendChild(item);
-        });
-
-        socket.on('image', function(data) {
-            var img = document.createElement('img');
-            img.src = data;
-            img.className = 'img-msg';
-            document.getElementById('chat-window').appendChild(img);
+        socket.on('message', function(data) {
+            var div = document.createElement("div");
+            div.className = "msg-line";
+            div.innerHTML = "<span style='color: #88ff88;'>[" + data.name + "]:</span> " + data.msg;
+            var msgBox = document.getElementById("messages");
+            msgBox.appendChild(div);
+            msgBox.scrollTop = msgBox.scrollHeight;
         });
     </script>
 </body>
 </html>
-                   
