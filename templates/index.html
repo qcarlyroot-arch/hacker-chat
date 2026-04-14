@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>TERMINAL ACCESS: GRANTED</title>
+    <style>
+        body {
+            background-color: #000;
+            color: #0f0;
+            font-family: 'Courier New', Courier, monospace;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            margin: 0;
+            overflow: hidden;
+        }
+        #chat-window {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            border-bottom: 2px solid #0f0;
+        }
+        #input-area {
+            padding: 10px;
+            display: flex;
+            background: #111;
+        }
+        input, button {
+            background: #000;
+            border: 1px solid #0f0;
+            color: #0f0;
+            padding: 10px;
+        }
+        input { flex: 1; margin-right: 10px; }
+        .img-msg { max-width: 200px; border: 1px solid #0f0; margin-top: 5px; }
+    </style>
+</head>
+<body>
+    <div id="chat-window">
+        <div>[SYSTEM] Bağlantı başarılı... Cihaz aktif.</div>
+    </div>
+    <div id="input-area">
+        <input id="msg" placeholder="Komut girin veya mesaj yazın..." autocomplete="off">
+        <input type="file" id="imageInput" accept="image/*" style="display:none">
+        <button onclick="document.getElementById('imageInput').click()">FOTO EKLE</button>
+        <button onclick="sendMsg()">GÖNDER</button>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
+    <script>
+        var socket = io();
+
+        function sendMsg() {
+            var input = document.getElementById('msg');
+            if(input.value) {
+                socket.emit('message', "> USER: " + input.value);
+                input.value = '';
+            }
+        }
+
+        document.getElementById('imageInput').onchange = function(e) {
+            var file = e.target.files[0];
+            var reader = new FileReader();
+            reader.onload = function(event) {
+                socket.emit('image', event.target.result);
+            };
+            reader.readAsDataURL(file);
+        };
+
+        socket.on('message', function(msg) {
+            var item = document.createElement('div');
+            item.textContent = msg;
+            document.getElementById('chat-window').appendChild(item);
+        });
+
+        socket.on('image', function(data) {
+            var img = document.createElement('img');
+            img.src = data;
+            img.className = 'img-msg';
+            document.getElementById('chat-window').appendChild(img);
+        });
+    </script>
+</body>
+</html>
+                   
